@@ -9,14 +9,13 @@ using CloudinaryDotNet;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
-
+var jwtKey = builder.Configuration["JWT_KEY"];
 builder.Services.AddControllers();
 
-var cloudinarySettings = builder.Configuration.GetSection("CloudinarySettings");
 var cloudinaryAccount = new Account(
-    cloudinarySettings["CloudName"],
-    cloudinarySettings["ApiKey"],
-    cloudinarySettings["ApiSecret"]
+    builder.Configuration["CLOUDINARY_CLOUD_NAME"],
+    builder.Configuration["CLOUDINARY_API_KEY"],
+    builder.Configuration["CLOUDINARY_API_SECRET"]
 );
 
 var cloudinary = new Cloudinary(cloudinaryAccount);
@@ -48,7 +47,9 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = "TuIssuer",
         ValidAudience = "TuAudience",
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("TuClaveSecretaQueEsLoSuficientementeLargaParaCumplirConLosRequisitosDeHS256"))
+        IssuerSigningKey = new SymmetricSecurityKey(
+    Encoding.UTF8.GetBytes(jwtKey!)
+)
     };
 });
 // Configura Swagger
@@ -110,5 +111,8 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine($"Error al inicializar datos: {ex.Message}");
     }
 }
+
+var port = Environment.GetEnvironmentVariable("PORT") ?? "10000";
+app.Urls.Add($"http://0.0.0.0:{port}");
 
 app.Run();
