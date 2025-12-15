@@ -1,24 +1,28 @@
-﻿# Imagen base con .NET 7 SDK para compilar
+﻿# =========================
+# BUILD STAGE
+# =========================
 FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
 WORKDIR /src
 
-# Copiar csproj y restaurar dependencias
-COPY *.csproj ./
-RUN dotnet restore
+# Copiar el csproj y restaurar
+COPY AutoRef_API.csproj ./
+RUN dotnet restore AutoRef_API.csproj
 
 # Copiar el resto del código
-COPY . .
-RUN dotnet publish -c Release -o /app/publish
+COPY . ./
+RUN dotnet publish AutoRef_API.csproj -c Release -o /app/publish
 
-# Imagen final más ligera solo para ejecución
+# =========================
+# RUNTIME STAGE
+# =========================
 FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS final
 WORKDIR /app
 
-# Render usa la variable PORT
+# Render expone el puerto en PORT
 ENV ASPNETCORE_URLS=http://0.0.0.0:${PORT}
 
 # Copiar la app publicada
 COPY --from=build /app/publish .
 
-# ⚠️ CAMBIA AutoRef_API.dll si tu proyecto se llama distinto
+# 🔴 NOMBRE EXACTO DEL DLL
 ENTRYPOINT ["dotnet", "AutoRef_API.dll"]
